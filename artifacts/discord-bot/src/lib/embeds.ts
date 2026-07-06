@@ -29,16 +29,12 @@ function avatarUrl(uuid: string): string {
 }
 
 // ── Queue active ──────────────────────────────────────
-export function queueActiveEmbed(
-  testerId: string,
-  queue: string[],
-  bannerUrl?: string,
-): EmbedBuilder {
+export function queueActiveEmbed(testerId: string, queue: string[]): EmbedBuilder {
   const queueStr = queue.length
     ? queue.map((id, i) => `${i + 1}. <@${id}>`).join('\n')
     : 'No one in queue yet.';
 
-  const embed = new EmbedBuilder()
+  return new EmbedBuilder()
     .setColor(COLORS.queue)
     .setDescription(
       `**Tester(s) Available!**\n` +
@@ -49,8 +45,6 @@ export function queueActiveEmbed(
     )
     .setFooter(FOOTER)
     .setTimestamp();
-  if (bannerUrl) embed.setImage(bannerUrl);
-  return embed;
 }
 
 // ── Queue inactive ────────────────────────────────────
@@ -82,9 +76,8 @@ export function ticketWelcomeEmbed(
   region: string | undefined,
   preferredServer: string | undefined,
   previousTier: string | undefined,
-  bannerUrl?: string,
 ): EmbedBuilder {
-  const embed = new EmbedBuilder()
+  return new EmbedBuilder()
     .setColor(COLORS.ticket)
     .setTitle(`${ign}'s Information`)
     .setThumbnail(avatarUrl(uuid))
@@ -98,8 +91,6 @@ export function ticketWelcomeEmbed(
     )
     .setFooter(FOOTER)
     .setTimestamp();
-  if (bannerUrl) embed.setImage(bannerUrl);
-  return embed;
 }
 
 // ── Results ───────────────────────────────────────────

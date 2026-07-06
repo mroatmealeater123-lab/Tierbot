@@ -81,7 +81,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       target.id, ign, profile?.uuid ?? '',
       `<@${interaction.user.id}>`,
       profile?.region, profile?.preferredServer, profile?.lastTestedTier,
-      cfg.bannerUrl,
     )],
   });
 

@@ -22,8 +22,6 @@ export const data = new SlashCommandBuilder()
       .addChannelTypes(ChannelType.GuildText))
   .addRoleOption(o =>
     o.setName('tester_role').setDescription('Role that testers have').setRequired(true))
-  .addStringOption(o =>
-    o.setName('banner_url').setDescription('Image URL shown in /start queue embed and test ticket welcome').setRequired(false))
   // Tier roles — low to high
   .addRoleOption(o => o.setName('lt5_role').setDescription('Role for LT5').setRequired(false))
   .addRoleOption(o => o.setName('ht5_role').setDescription('Role for HT5').setRequired(false))
@@ -46,8 +44,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const evalCategory    = interaction.options.getChannel('eval_category', true);
   const resultsChannel  = interaction.options.getChannel('results_channel', true);
   const testerRole      = interaction.options.getRole('tester_role', true);
-  const bannerUrl       = interaction.options.getString('banner_url') ?? undefined;
-
   const lt5Role = interaction.options.getRole('lt5_role');
   const ht5Role = interaction.options.getRole('ht5_role');
   const lt4Role = interaction.options.getRole('lt4_role');
@@ -66,7 +62,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     evalCategoryId:    evalCategory.id,
     resultsChannelId:  resultsChannel.id,
     testerRoleId:      testerRole.id,
-    ...(bannerUrl !== undefined ? { bannerUrl } : {}),
     tierRoles: {
       // preserve any existing roles not explicitly set in this run
       ...existing.tierRoles,
@@ -99,7 +94,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         `**Eval Category:** ${evalCategory}\n` +
         `**Results Channel:** ${resultsChannel}\n` +
         `**Tester Role:** ${testerRole}\n` +
-        `**Banner URL:** ${bannerUrl ?? 'Not set'}\n` +
         `**Tier Roles:** ${tierRolesStr}`,
       ),
     ],

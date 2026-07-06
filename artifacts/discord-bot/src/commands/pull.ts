@@ -79,7 +79,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   await ticketChannel.send({
     content: `<@${playerId}> <@${interaction.user.id}>`,
-    embeds: [ticketWelcomeEmbed(playerId, ign, uuid, `<@${interaction.user.id}>`, region, preferredServer, previousTier, cfg.bannerUrl)],
+    embeds: [ticketWelcomeEmbed(playerId, ign, uuid, `<@${interaction.user.id}>`, region, preferredServer, previousTier)],
   });
 
   // Update queue message to show remaining queue
@@ -87,7 +87,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     try {
       const queueCh = await interaction.guild.channels.fetch(cfg.queueChannelId) as TextChannel;
       const queueMsg = await queueCh.messages.fetch(cfg.queueMessageId);
-      await queueMsg.edit({ embeds: [queueActiveEmbed(interaction.user.id, queue.queue, cfg.bannerUrl)] });
+      await queueMsg.edit({ embeds: [queueActiveEmbed(interaction.user.id, queue.queue)] });
     } catch { /* queue message may be gone */ }
   }
 

@@ -22,7 +22,6 @@ export interface GuildConfig {
     lt1?: string;
     ht1?: string;
   };
-  bannerUrl?: string;
   panelChannelId?: string;
   panelMessageId?: string;
   queueChannelId?: string;

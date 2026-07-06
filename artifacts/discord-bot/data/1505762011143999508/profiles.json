@@ -2,9 +2,9 @@
   "1352173399509827594": {
     "minecraftIGN": "Reacod",
     "uuid": "8b6aff83aa9445e1a8b44254a7608daa",
-    "verified": true,
-    "inWaitlist": true,
     "region": "na",
-    "cooldownUntil": 1783568548423
+    "verified": true,
+    "inWaitlist": false,
+    "preferredServer": "Napvp.us"
   }
 }
