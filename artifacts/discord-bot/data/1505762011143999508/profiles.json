@@ -3,9 +3,8 @@
     "minecraftIGN": "Reacod",
     "uuid": "8b6aff83aa9445e1a8b44254a7608daa",
     "region": "na",
-    "preferredServer": "Napvp.us",
+    "preferredServer": "Napvp us",
     "verified": true,
-    "inWaitlist": false,
-    "cooldownUntil": 1783576751673
+    "inWaitlist": true
   }
 }
