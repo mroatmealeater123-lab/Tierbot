@@ -77,7 +77,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   await ticketChannel.send({
     content: `<@${target.id}> <@${interaction.user.id}>`,
-    embeds: [ticketWelcomeEmbed(`<@${target.id}>`, `<@${interaction.user.id}>`, ign)],
+    embeds: [ticketWelcomeEmbed(
+      target.id, ign, profile?.uuid ?? '',
+      `<@${interaction.user.id}>`,
+      profile?.region, profile?.preferredServer, profile?.lastTestedTier,
+      cfg.bannerUrl,
+    )],
   });
 
   await interaction.editReply({

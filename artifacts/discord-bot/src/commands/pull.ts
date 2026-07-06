@@ -44,16 +44,21 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const playerId = queue.queue.shift()!;
   setQueue(interaction.guild.id, queue);
 
-  // Get player IGN from profile and clear their waitlist state
+  // Get player profile and clear their waitlist state
   const profile = getProfile(interaction.guild.id, playerId);
-  const ign = profile?.minecraftIGN ?? 'Unknown';
+  const ign            = profile?.minecraftIGN ?? 'Unknown';
+  const uuid           = profile?.uuid ?? '';
+  const region         = profile?.region;
+  const preferredServer = profile?.preferredServer;
+  const previousTier   = profile?.lastTestedTier;
+
   if (profile) {
     profile.inWaitlist = false;
     setProfile(interaction.guild.id, playerId, profile);
   }
 
   // Create private ticket channel
-  const channelName = `test-${ign.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  const channelName = `${ign.toLowerCase().replace(/[^a-z0-9]/g, '')}-test`;
   const ticketChannel = await interaction.guild.channels.create({
     name: channelName,
     type: ChannelType.GuildText,
@@ -61,7 +66,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     permissionOverwrites: [
       { id: interaction.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
       { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
-      { id: playerId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+      { id: playerId,            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
     ],
   });
 
@@ -74,15 +79,15 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   await ticketChannel.send({
     content: `<@${playerId}> <@${interaction.user.id}>`,
-    embeds: [ticketWelcomeEmbed(`<@${playerId}>`, `<@${interaction.user.id}>`, ign, cfg.bannerUrl)],
+    embeds: [ticketWelcomeEmbed(playerId, ign, uuid, `<@${interaction.user.id}>`, region, preferredServer, previousTier, cfg.bannerUrl)],
   });
 
-  // Update queue message
+  // Update queue message to show remaining queue
   if (cfg.queueChannelId && cfg.queueMessageId) {
     try {
       const queueCh = await interaction.guild.channels.fetch(cfg.queueChannelId) as TextChannel;
       const queueMsg = await queueCh.messages.fetch(cfg.queueMessageId);
-      await queueMsg.edit({ embeds: [queueActiveEmbed(`<@${interaction.user.id}>`, queue.queue.length, cfg.bannerUrl)] });
+      await queueMsg.edit({ embeds: [queueActiveEmbed(interaction.user.id, queue.queue, cfg.bannerUrl)] });
     } catch { /* queue message may be gone */ }
   }
 

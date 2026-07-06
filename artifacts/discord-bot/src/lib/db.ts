@@ -48,6 +48,7 @@ export interface UserProfile {
   uuid: string;
   region?: 'na' | 'eu' | 'au';
   preferredServer?: string;
+  lastTestedTier?: string;
   verified: boolean;
   inWaitlist: boolean;
   cooldownUntil?: number;

@@ -108,13 +108,13 @@ async function handleJoinQueue(interaction: ButtonInteraction): Promise<void> {
   queue.queue.push(interaction.user.id);
   setQueue(interaction.guild.id, queue);
 
-  // Update queue message
+  // Update queue message with full numbered list
   const cfg = getConfig(interaction.guild.id);
   if (cfg.queueChannelId && cfg.queueMessageId) {
     try {
       const ch = await interaction.guild.channels.fetch(cfg.queueChannelId) as TextChannel;
       const msg = await ch.messages.fetch(cfg.queueMessageId);
-      await msg.edit({ embeds: [queueActiveEmbed(`<@${queue.testerId}>`, queue.queue.length, cfg.bannerUrl)] });
+      await msg.edit({ embeds: [queueActiveEmbed(queue.testerId!, queue.queue, cfg.bannerUrl)] });
     } catch { /* queue message may be gone */ }
   }
 

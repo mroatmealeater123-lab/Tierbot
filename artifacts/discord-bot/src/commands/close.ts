@@ -4,7 +4,7 @@ import {
   TextChannel,
 } from 'discord.js';
 import { getConfig, getTicket, removeTicket, getProfile, setProfile, applyCooldown } from '../lib/db.js';
-import { resultsEmbed, errorEmbed } from '../lib/embeds.js';
+import { resultsEmbed, errorEmbed, tierLabel } from '../lib/embeds.js';
 
 const TIER_CHOICES = ['lt5', 'ht5', 'lt4', 'ht4', 'lt3', 'ht3', 'lt2', 'ht2', 'lt1', 'ht1'] as const;
 
@@ -13,10 +13,10 @@ export const data = new SlashCommandBuilder()
   .setDescription('Close the ticket, post results, and assign the tier role')
   .addStringOption(o =>
     o.setName('tier_earned').setDescription('Tier the player earned').setRequired(true)
-      .addChoices(...TIER_CHOICES.map(t => ({ name: t.toUpperCase(), value: t }))))
+      .addChoices(...TIER_CHOICES.map(t => ({ name: tierLabel(t), value: t }))))
   .addStringOption(o =>
     o.setName('tier_before').setDescription('Tier the player had before').setRequired(true)
-      .addChoices(...TIER_CHOICES.map(t => ({ name: t.toUpperCase(), value: t }))));
+      .addChoices(...TIER_CHOICES.map(t => ({ name: tierLabel(t), value: t }))));
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   if (!interaction.guild) return;
@@ -43,34 +43,36 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   await interaction.deferReply();
 
+  // Get player profile for display info
+  const playerProfile = getProfile(interaction.guild.id, ticket.playerId);
+  const ign    = playerProfile?.minecraftIGN ?? ticket.playerIGN;
+  const uuid   = playerProfile?.uuid ?? '';
+  const region = playerProfile?.region;
+
   // Post results in results channel
   if (cfg.resultsChannelId) {
     try {
       const resultsCh = await interaction.guild.channels.fetch(cfg.resultsChannelId) as TextChannel;
       await resultsCh.send({
-        content: `<@${ticket.playerId}> <@${ticket.testerId}>`,
-        embeds: [resultsEmbed(`<@${ticket.playerId}>`, `<@${ticket.testerId}>`, tierBefore, tierEarned)],
+        content: `<@${ticket.playerId}>`,
+        embeds: [resultsEmbed(ign, uuid, `<@${ticket.testerId}>`, region, tierBefore, tierEarned)],
       });
     } catch { /* results channel may be inaccessible */ }
   }
 
-  // Give tier role — remove all tier roles first, then add the earned one
+  // Give tier role — remove all old tier roles first, then add earned one
   const roleId = cfg.tierRoles?.[tierEarned];
   try {
     const playerMember = await interaction.guild.members.fetch(ticket.playerId);
     const allTierRoles = Object.values(cfg.tierRoles ?? {}).filter((id): id is string => !!id);
-    await playerMember.roles.remove(
-      allTierRoles.filter(r => interaction.guild!.roles.cache.has(r)),
-    );
-    if (roleId) {
-      await playerMember.roles.add(roleId);
-    }
+    await playerMember.roles.remove(allTierRoles.filter(r => interaction.guild!.roles.cache.has(r)));
+    if (roleId) await playerMember.roles.add(roleId);
   } catch { /* member may have left */ }
 
-  // Reset waitlist state and start 3-day cooldown (cooldown only ever starts here)
-  const playerProfile = getProfile(interaction.guild.id, ticket.playerId);
+  // Reset waitlist state, record last tested tier, apply 3-day cooldown
   if (playerProfile) {
     playerProfile.inWaitlist = false;
+    playerProfile.lastTestedTier = tierEarned;
     setProfile(interaction.guild.id, ticket.playerId, playerProfile);
   }
   applyCooldown(interaction.guild.id, ticket.playerId);
