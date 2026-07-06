@@ -10,8 +10,8 @@ export const COLORS = {
 
 export const FOOTER = { text: 'VTL McTiers' };
 
-export function queueActiveEmbed(testerTag: string, count: number): EmbedBuilder {
-  return new EmbedBuilder()
+export function queueActiveEmbed(testerTag: string, count: number, bannerUrl?: string): EmbedBuilder {
+  const embed = new EmbedBuilder()
     .setColor(COLORS.success)
     .setTitle('✅ Tester Active')
     .setDescription('A tester is currently available! Click **Join Queue** below to get in line for your tier test.')
@@ -21,6 +21,8 @@ export function queueActiveEmbed(testerTag: string, count: number): EmbedBuilder
     )
     .setFooter(FOOTER)
     .setTimestamp();
+  if (bannerUrl) embed.setImage(bannerUrl);
+  return embed;
 }
 
 export function queueInactiveEmbed(lastActive?: Date): EmbedBuilder {
@@ -32,8 +34,8 @@ export function queueInactiveEmbed(lastActive?: Date): EmbedBuilder {
     .setTimestamp();
 }
 
-export function ticketWelcomeEmbed(playerMention: string, testerMention: string, ign: string): EmbedBuilder {
-  return new EmbedBuilder()
+export function ticketWelcomeEmbed(playerMention: string, testerMention: string, ign: string, bannerUrl?: string): EmbedBuilder {
+  const embed = new EmbedBuilder()
     .setColor(COLORS.primary)
     .setTitle('🎯 Tier Test')
     .setDescription(`${playerMention}, you have been pulled for your tier test!\nPlease be ready — your tester will begin shortly.`)
@@ -43,6 +45,8 @@ export function ticketWelcomeEmbed(playerMention: string, testerMention: string,
     )
     .setFooter(FOOTER)
     .setTimestamp();
+  if (bannerUrl) embed.setImage(bannerUrl);
+  return embed;
 }
 
 export function resultsEmbed(playerMention: string, testerMention: string, tierBefore: string, tierEarned: string): EmbedBuilder {
@@ -67,7 +71,7 @@ export function panelEmbed(): EmbedBuilder {
     .setDescription(
       'Welcome to VTL tier testing. Use the buttons below to get started.\n\n' +
       '**✅ Verify Account** — Link your Minecraft account\n' +
-      '**📋 Enter Waitlist** — Join the testing waitlist (3-day cooldown)\n' +
+      '**📋 Enter Waitlist** — Join the testing waitlist\n' +
       '**🌍 Select Region** — Choose your region (NA / EU / AU)\n' +
       '**👤 My Profile** — View your testing profile',
     )
@@ -80,6 +84,7 @@ export function profileEmbed(
   ign: string,
   uuid: string,
   region: string | undefined,
+  preferredServer: string | undefined,
   inWaitlist: boolean,
   cooldownUntil?: number,
 ): EmbedBuilder {
@@ -95,6 +100,7 @@ export function profileEmbed(
       { name: 'Minecraft IGN', value: ign, inline: true },
       { name: 'UUID', value: `\`${uuid}\``, inline: false },
       { name: 'Region', value: region ? region.toUpperCase() : 'Not set', inline: true },
+      { name: 'Preferred Server', value: preferredServer ?? 'Not set', inline: true },
       { name: 'In Waitlist', value: inWaitlist ? 'Yes' : 'No', inline: true },
       { name: 'Cooldown', value: cooldownStr, inline: true },
     )

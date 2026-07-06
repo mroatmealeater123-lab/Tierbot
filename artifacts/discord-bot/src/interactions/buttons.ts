@@ -13,7 +13,6 @@ import {
   getQueue,
   setQueue,
   cooldownStatus,
-  applyCooldown,
   formatCooldown,
   getConfig,
 } from '../lib/db.js';
@@ -34,7 +33,6 @@ export async function handleButton(interaction: ButtonInteraction): Promise<void
       break;
     }
     case 'verify_account': {
-      // Show modal to enter Minecraft IGN
       const modal = new ModalBuilder()
         .setCustomId('verify_modal')
         .setTitle('Verify Your Minecraft Account');
@@ -98,11 +96,11 @@ async function handleJoinQueue(interaction: ButtonInteraction): Promise<void> {
     return;
   }
 
-  // Enforce cooldown at queue entry
+  // Block if they're still on cooldown from a previous test
   const cd = cooldownStatus(interaction.guild.id, interaction.user.id);
   if (cd.active && cd.timeLeft) {
     await interaction.editReply({
-      embeds: [errorEmbed(`You are on a 3-day cooldown. You can re-enter the waitlist <t:${Math.floor((Date.now() + cd.timeLeft) / 1000)}:R>.`)],
+      embeds: [errorEmbed(`You are on a testing cooldown for **${formatCooldown(cd.timeLeft)}**. You cannot join the queue yet.`)],
     });
     return;
   }
@@ -116,7 +114,7 @@ async function handleJoinQueue(interaction: ButtonInteraction): Promise<void> {
     try {
       const ch = await interaction.guild.channels.fetch(cfg.queueChannelId) as TextChannel;
       const msg = await ch.messages.fetch(cfg.queueMessageId);
-      await msg.edit({ embeds: [queueActiveEmbed(`<@${queue.testerId}>`, queue.queue.length)] });
+      await msg.edit({ embeds: [queueActiveEmbed(`<@${queue.testerId}>`, queue.queue.length, cfg.bannerUrl)] });
     } catch { /* queue message may be gone */ }
   }
 
@@ -128,48 +126,48 @@ async function handleJoinQueue(interaction: ButtonInteraction): Promise<void> {
 
 async function handleEnterWaitlist(interaction: ButtonInteraction): Promise<void> {
   if (!interaction.guild) return;
-  await interaction.deferReply({ ephemeral: true });
 
   const profile = getProfile(interaction.guild.id, interaction.user.id);
   if (!profile?.verified) {
-    await interaction.editReply({ embeds: [errorEmbed('You need to verify your Minecraft account first.')] });
+    await interaction.reply({ embeds: [errorEmbed('You need to verify your Minecraft account first.')], ephemeral: true });
     return;
   }
   if (!profile.region) {
-    await interaction.editReply({ embeds: [errorEmbed('Please select your region before entering the waitlist.')] });
+    await interaction.reply({ embeds: [errorEmbed('Please select your region before entering the waitlist.')], ephemeral: true });
     return;
   }
 
+  // Block if they're still on cooldown from a previous test (cooldown is only ever set by /close)
   const cd = cooldownStatus(interaction.guild.id, interaction.user.id);
   if (cd.active && cd.timeLeft) {
-    await interaction.editReply({
-      embeds: [errorEmbed(`You are on cooldown for **${formatCooldown(cd.timeLeft)}**. You cannot enter the waitlist yet.`)],
+    await interaction.reply({
+      embeds: [errorEmbed(`You are on a testing cooldown for **${formatCooldown(cd.timeLeft)}**. You cannot re-enter the waitlist yet.`)],
+      ephemeral: true,
     });
     return;
   }
 
   if (profile.inWaitlist) {
-    await interaction.editReply({ embeds: [errorEmbed('You are already on the waitlist.')] });
+    await interaction.reply({ embeds: [errorEmbed('You are already on the waitlist.')], ephemeral: true });
     return;
   }
 
-  profile.inWaitlist = true;
-  setProfile(interaction.guild.id, interaction.user.id, profile);
+  // Show modal asking for preferred server
+  const modal = new ModalBuilder()
+    .setCustomId('waitlist_modal')
+    .setTitle('Enter Waitlist');
 
-  // Apply 3-day cooldown immediately upon entering waitlist
-  applyCooldown(interaction.guild.id, interaction.user.id);
+  const serverInput = new TextInputBuilder()
+    .setCustomId('preferred_server')
+    .setLabel('Preferred Server')
+    .setStyle(TextInputStyle.Short)
+    .setPlaceholder('e.g. Lunar Network, Badlion, Hypixel...')
+    .setMinLength(2)
+    .setMaxLength(64)
+    .setRequired(true);
 
-  const updatedProfile = getProfile(interaction.guild.id, interaction.user.id)!;
-  await interaction.editReply({
-    embeds: [
-      successEmbed(
-        `You have entered the waitlist!\n\n` +
-        `**IGN:** ${profile.minecraftIGN}\n` +
-        `**Region:** ${profile.region.toUpperCase()}\n\n` +
-        `You can join the queue when a tester is active. Your next waitlist entry will be available <t:${Math.floor((updatedProfile.cooldownUntil ?? 0) / 1000)}:R>.`,
-      ),
-    ],
-  });
+  modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(serverInput));
+  await interaction.showModal(modal);
 }
 
 async function handleSelectRegion(interaction: ButtonInteraction): Promise<void> {
@@ -214,6 +212,7 @@ async function handleMyProfile(interaction: ButtonInteraction): Promise<void> {
         profile.minecraftIGN,
         profile.uuid,
         profile.region,
+        profile.preferredServer,
         profile.inWaitlist,
         profile.cooldownUntil,
       ),

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 
-export type Tier = 'lt2' | 'ht2' | 'lt1' | 'ht1';
+export type Tier = 'lt5' | 'ht5' | 'lt4' | 'ht4' | 'lt3' | 'ht3' | 'lt2' | 'ht2' | 'lt1' | 'ht1';
 
 export interface GuildConfig {
   testingCategoryId: string;
@@ -11,11 +11,18 @@ export interface GuildConfig {
   resultsChannelId: string;
   testerRoleId: string;
   tierRoles: {
+    lt5?: string;
+    ht5?: string;
+    lt4?: string;
+    ht4?: string;
+    lt3?: string;
+    ht3?: string;
     lt2?: string;
     ht2?: string;
     lt1?: string;
     ht1?: string;
   };
+  bannerUrl?: string;
   panelChannelId?: string;
   panelMessageId?: string;
   queueChannelId?: string;
@@ -40,6 +47,7 @@ export interface UserProfile {
   minecraftIGN: string;
   uuid: string;
   region?: 'na' | 'eu' | 'au';
+  preferredServer?: string;
   verified: boolean;
   inWaitlist: boolean;
   cooldownUntil?: number;

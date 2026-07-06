@@ -39,7 +39,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       .setEmoji('📋'),
   );
 
-  const embed = queueActiveEmbed(`<@${interaction.user.id}>`, 0);
+  const embed = queueActiveEmbed(`<@${interaction.user.id}>`, 0, cfg.bannerUrl);
   const msg = await interaction.reply({ embeds: [embed], components: [row], fetchReply: true });
 
   setQueue(interaction.guild.id, {

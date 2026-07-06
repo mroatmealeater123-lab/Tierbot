@@ -3,10 +3,10 @@ import {
   ChatInputCommandInteraction,
   TextChannel,
 } from 'discord.js';
-import { getConfig, getTicket, removeTicket } from '../lib/db.js';
+import { getConfig, getTicket, removeTicket, getProfile, setProfile, applyCooldown } from '../lib/db.js';
 import { resultsEmbed, errorEmbed } from '../lib/embeds.js';
 
-const TIER_CHOICES = ['lt2', 'ht2', 'lt1', 'ht1'] as const;
+const TIER_CHOICES = ['lt5', 'ht5', 'lt4', 'ht4', 'lt3', 'ht3', 'lt2', 'ht2', 'lt1', 'ht1'] as const;
 
 export const data = new SlashCommandBuilder()
   .setName('close')
@@ -15,7 +15,8 @@ export const data = new SlashCommandBuilder()
     o.setName('tier_earned').setDescription('Tier the player earned').setRequired(true)
       .addChoices(...TIER_CHOICES.map(t => ({ name: t.toUpperCase(), value: t }))))
   .addStringOption(o =>
-    o.setName('tier_before').setDescription('Tier the player had before').setRequired(true));
+    o.setName('tier_before').setDescription('Tier the player had before').setRequired(true)
+      .addChoices(...TIER_CHOICES.map(t => ({ name: t.toUpperCase(), value: t }))));
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   if (!interaction.guild) return;
@@ -38,7 +39,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   const tierEarned = interaction.options.getString('tier_earned', true) as typeof TIER_CHOICES[number];
-  const tierBefore = interaction.options.getString('tier_before', true);
+  const tierBefore  = interaction.options.getString('tier_before', true);
 
   await interaction.deferReply();
 
@@ -53,20 +54,20 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     } catch { /* results channel may be inaccessible */ }
   }
 
-  // Give tier role
+  // Give tier role — remove all tier roles first, then add the earned one
   const roleId = cfg.tierRoles?.[tierEarned];
-  if (roleId) {
-    try {
-      const playerMember = await interaction.guild.members.fetch(ticket.playerId);
-      // Remove old tier roles first
-      const oldRoles = Object.values(cfg.tierRoles ?? {}).filter((id): id is string => !!id);
-      await playerMember.roles.remove(oldRoles.filter(r => interaction.guild!.roles.cache.has(r)));
+  try {
+    const playerMember = await interaction.guild.members.fetch(ticket.playerId);
+    const allTierRoles = Object.values(cfg.tierRoles ?? {}).filter((id): id is string => !!id);
+    await playerMember.roles.remove(
+      allTierRoles.filter(r => interaction.guild!.roles.cache.has(r)),
+    );
+    if (roleId) {
       await playerMember.roles.add(roleId);
-    } catch { /* member may have left */ }
-  }
+    }
+  } catch { /* member may have left */ }
 
-  // Reset player waitlist state + apply cooldown so they re-enter waitlist for next test
-  const { getProfile, setProfile, applyCooldown } = await import('../lib/db.js');
+  // Reset waitlist state and start 3-day cooldown (cooldown only ever starts here)
   const playerProfile = getProfile(interaction.guild.id, ticket.playerId);
   if (playerProfile) {
     playerProfile.inWaitlist = false;
@@ -78,7 +79,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   await interaction.editReply({ embeds: [{ color: 0x57F287, description: '✅ Closing ticket...' }] });
 
-  // Delete the channel after a short delay
   setTimeout(async () => {
     try {
       const ch = await interaction.guild!.channels.fetch(interaction.channelId);
