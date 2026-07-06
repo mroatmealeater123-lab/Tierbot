@@ -1,0 +1,8 @@
+node_modules
+artifacts/*/node_modules
+lib/*/node_modules
+.git
+*.log
+attached_assets
+artifacts/api-server
+artifacts/mockup-sandbox
