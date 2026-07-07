@@ -1,0 +1,30 @@
+{
+  "1369485565400977468": {
+    "minecraftIGN": "Bigboy_nzx",
+    "uuid": "079b068a97224f2b9c23e736c7770348",
+    "verified": true,
+    "inWaitlist": false,
+    "region": "na",
+    "preferredServer": "Neocon.us",
+    "lastTestedTier": "lt5",
+    "cooldownUntil": 1783615473060
+  },
+  "1399524677197496504": {
+    "minecraftIGN": "valofaint_",
+    "uuid": "4081d6da370a448b9dfcfc7a13852c3b",
+    "verified": true,
+    "inWaitlist": true,
+    "region": "na",
+    "preferredServer": "napvp.us",
+    "lastTestedTier": "lt5"
+  },
+  "1352173399509827594": {
+    "minecraftIGN": "Reacod",
+    "uuid": "8b6aff83aa9445e1a8b44254a7608daa",
+    "verified": true,
+    "inWaitlist": false,
+    "region": "na",
+    "preferredServer": "Napvp.us",
+    "lastTestedTier": "ht3"
+  }
+}
