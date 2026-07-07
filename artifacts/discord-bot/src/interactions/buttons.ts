@@ -81,6 +81,10 @@ async function handleJoinQueue(interaction: ButtonInteraction): Promise<void> {
     await interaction.editReply({ embeds: [errorEmbed(`You are already in the queue at position **#${pos}**.`)] });
     return;
   }
+  if (queue.queue.length >= 20) {
+    await interaction.editReply({ embeds: [errorEmbed('The queue is full **(20/20)**. Please try again later.')] });
+    return;
+  }
 
   const profile = getProfile(interaction.guild.id, interaction.user.id);
   if (!profile?.verified) {
