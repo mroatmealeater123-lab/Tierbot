@@ -22,15 +22,15 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     await interaction.reply({ embeds: [errorEmbed('Queue is not active.')], ephemeral: true });
     return;
   }
-  if (queue.testerId !== interaction.user.id) {
+  if (!queue.testerIds.includes(interaction.user.id)) {
     const member = await interaction.guild.members.fetch(interaction.user.id);
     if (!member.permissions.has('Administrator')) {
-      await interaction.reply({ embeds: [errorEmbed('Only the active tester or an admin can stop the queue.')], ephemeral: true });
+      await interaction.reply({ embeds: [errorEmbed('Only an active tester or an admin can stop the queue.')], ephemeral: true });
       return;
     }
   }
 
-  setQueue(interaction.guild.id, { active: false, testerId: null, queue: [] });
+  setQueue(interaction.guild.id, { active: false, testerIds: [], queue: [] });
 
   // Edit the queue message
   if (cfg.queueChannelId && cfg.queueMessageId) {

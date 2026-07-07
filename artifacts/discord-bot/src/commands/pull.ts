@@ -57,6 +57,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     setProfile(interaction.guild.id, playerId, profile);
   }
 
+  // Add this tester to the active testers list if not already there
+  if (!queue.testerIds.includes(interaction.user.id)) {
+    queue.testerIds.push(interaction.user.id);
+    setQueue(interaction.guild.id, queue);
+  }
+
   // Create private ticket channel
   const channelName = `${ign.toLowerCase().replace(/[^a-z0-9]/g, '')}-test`;
   const ticketChannel = await interaction.guild.channels.create({
@@ -82,12 +88,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     embeds: [ticketWelcomeEmbed(playerId, ign, uuid, `<@${interaction.user.id}>`, region, preferredServer, previousTier)],
   });
 
-  // Update queue message to show remaining queue
+  // Update queue message to show remaining queue + all active testers
   if (cfg.queueChannelId && cfg.queueMessageId) {
     try {
       const queueCh = await interaction.guild.channels.fetch(cfg.queueChannelId) as TextChannel;
       const queueMsg = await queueCh.messages.fetch(cfg.queueMessageId);
-      await queueMsg.edit({ embeds: [queueActiveEmbed(interaction.user.id, queue.queue)] });
+      await queueMsg.edit({ embeds: [queueActiveEmbed(queue.testerIds, queue.queue)] });
     } catch { /* queue message may be gone */ }
   }
 

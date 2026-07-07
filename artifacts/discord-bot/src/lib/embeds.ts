@@ -29,10 +29,14 @@ function avatarUrl(uuid: string): string {
 }
 
 // ── Queue active ──────────────────────────────────────
-export function queueActiveEmbed(testerId: string, queue: string[]): EmbedBuilder {
+export function queueActiveEmbed(testerIds: string[], queue: string[]): EmbedBuilder {
   const queueStr = queue.length
     ? queue.map((id, i) => `${i + 1}. <@${id}>`).join('\n')
     : 'No one in queue yet.';
+
+  const testersStr = testerIds.length
+    ? testerIds.map((id, i) => `${i + 1}. <@${id}>`).join('\n')
+    : 'None';
 
   return new EmbedBuilder()
     .setColor(COLORS.queue)
@@ -41,7 +45,7 @@ export function queueActiveEmbed(testerId: string, queue: string[]): EmbedBuilde
       `⏰ The queue updates every 1 minute.\n` +
       `Use \`/leave\` if you wish to be removed from the waitlist or queue.\n\n` +
       `**Queue:**\n${queueStr}\n\n` +
-      `**Active Testers:**\n1. <@${testerId}>`,
+      `**Active Testers:**\n${testersStr}`,
     )
     .setFooter(FOOTER)
     .setTimestamp();

@@ -114,7 +114,7 @@ async function handleJoinQueue(interaction: ButtonInteraction): Promise<void> {
     try {
       const ch = await interaction.guild.channels.fetch(cfg.queueChannelId) as TextChannel;
       const msg = await ch.messages.fetch(cfg.queueMessageId);
-      await msg.edit({ embeds: [queueActiveEmbed(queue.testerId!, queue.queue)] });
+      await msg.edit({ embeds: [queueActiveEmbed(queue.testerIds, queue.queue)] });
     } catch { /* queue message may be gone */ }
   }
 

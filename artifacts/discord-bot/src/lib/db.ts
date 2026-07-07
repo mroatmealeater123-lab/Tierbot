@@ -30,7 +30,7 @@ export interface GuildConfig {
 
 export interface QueueState {
   active: boolean;
-  testerId: string | null;
+  testerIds: string[];
   queue: string[];
 }
 
@@ -79,7 +79,19 @@ export function setConfig(guildId: string, cfg: Partial<GuildConfig>): void {
 
 // ── Queue ─────────────────────────────────────────────
 export function getQueue(guildId: string): QueueState {
-  return read(path.join(ensureDir(guildId), 'queue.json'), { active: false, testerId: null, queue: [] });
+  const raw = read<Record<string, unknown>>(
+    path.join(ensureDir(guildId), 'queue.json'),
+    { active: false, testerIds: [], queue: [] },
+  );
+
+  // Migrate legacy format: { testerId: string | null } → { testerIds: string[] }
+  if (!Array.isArray(raw.testerIds)) {
+    const legacyId = typeof raw.testerId === 'string' ? raw.testerId : null;
+    raw.testerIds = legacyId ? [legacyId] : [];
+    delete raw.testerId;
+  }
+
+  return raw as unknown as QueueState;
 }
 export function setQueue(guildId: string, q: QueueState): void {
   write(path.join(ensureDir(guildId), 'queue.json'), q);
