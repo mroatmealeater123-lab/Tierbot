@@ -13,7 +13,7 @@ COPY tsconfig.base.json tsconfig.json ./
 COPY artifacts/discord-bot/package.json ./artifacts/discord-bot/
 
 # Install dependencies for the discord-bot only
-RUN pnpm install --filter @workspace/discord-bot --frozen-lockfile
+RUN pnpm install --filter @workspace/discord-bot --no-frozen-lockfile
 
 # Copy bot source
 COPY artifacts/discord-bot ./artifacts/discord-bot
