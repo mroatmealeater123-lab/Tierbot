@@ -35,11 +35,14 @@ const ALL_COMMANDS: Command[] = [
 ];
 
 const MAX_GUILDS = 3;
+process.stdout.write('🚀 Bot process started\n');
+
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
 if (!TOKEN) {
-  console.error('DISCORD_BOT_TOKEN is not set');
+  process.stderr.write('❌ DISCORD_BOT_TOKEN is not set\n');
   process.exit(1);
 }
+process.stdout.write('✅ Token found, connecting to Discord...\n');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
@@ -115,4 +118,7 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-client.login(TOKEN);
+client.login(TOKEN).catch(err => {
+  process.stderr.write(`❌ Login failed: ${err.message}\n`);
+  process.exit(1);
+});
