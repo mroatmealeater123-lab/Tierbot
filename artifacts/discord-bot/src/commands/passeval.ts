@@ -1,15 +1,10 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, ChannelType } from 'discord.js';
-import { getConfig, getTicket, setTicket, getProfile } from '../lib/db.js';
+import { getConfig, getTicket, getProfile } from '../lib/db.js';
 import { successEmbed, errorEmbed, tierLabel } from '../lib/embeds.js';
-
-const TIER_CHOICES = ['lt5', 'ht5', 'lt4', 'ht4', 'lt3', 'ht3', 'lt2', 'ht2', 'lt1', 'ht1'] as const;
 
 export const data = new SlashCommandBuilder()
   .setName('passeval')
-  .setDescription('Move this ticket to eval, rename to {ign}-{tier}, and give the tier role')
-  .addStringOption(o =>
-    o.setName('tier').setDescription('Tier level').setRequired(true)
-      .addChoices(...TIER_CHOICES.map(t => ({ name: tierLabel(t), value: t }))));
+  .setDescription('Move this ticket to eval, rename to {ign}-{tier}-test, and give the tier role');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   if (!interaction.guild) return;
@@ -35,11 +30,35 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  const tier = interaction.options.getString('tier', true) as typeof TIER_CHOICES[number];
+  // Auto-detect tier from player profile (set by /close)
+  const profile = getProfile(interaction.guild.id, ticket.playerId);
+  let tier = profile?.lastTestedTier;
 
-  // Build channel name: lowercase IGN + tier (e.g. reacod-ht3)
+  // Fallback: check current tier roles on the player
+  if (!tier && cfg.tierRoles) {
+    try {
+      const playerMember = await interaction.guild.members.fetch(ticket.playerId);
+      const tierRoleEntries = Object.entries(cfg.tierRoles) as [string, string][];
+      for (const [tierKey, roleId] of tierRoleEntries) {
+        if (roleId && playerMember.roles.cache.has(roleId)) {
+          tier = tierKey;
+          break;
+        }
+      }
+    } catch { /* member fetch failed */ }
+  }
+
+  if (!tier) {
+    await interaction.reply({
+      embeds: [errorEmbed('Could not detect the player\'s tier. Run `/close` first, or check their tier roles.')],
+      ephemeral: true,
+    });
+    return;
+  }
+
+  // Build channel name: e.g. reacod-ht3-test
   const ign     = ticket.playerIGN.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const newName = `${ign}-${tier}`;
+  const newName = `${ign}-${tier}-test`;
 
   await interaction.deferReply();
 
@@ -60,7 +79,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const playerMember = await interaction.guild.members.fetch(ticket.playerId);
     const allTierRoleIds = Object.values(cfg.tierRoles ?? {}).filter((id): id is string => !!id);
     if (allTierRoleIds.length) await playerMember.roles.remove(allTierRoleIds);
-    const earnedRoleId = cfg.tierRoles?.[tier];
+    const earnedRoleId = cfg.tierRoles?.[tier as keyof typeof cfg.tierRoles];
     if (earnedRoleId) await playerMember.roles.add(earnedRoleId);
   } catch (err) {
     console.error('Role assignment failed in /passeval:', err);
